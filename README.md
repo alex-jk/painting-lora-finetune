@@ -1,1 +1,1 @@
-# painting-lora-finetune
+This project fine-tunes Stable Diffusion using LoRA to generate oil painting–style images based on a custom dataset. It uses a small set of reference paintings to train a lightweight model extension, allowing you to generate new images in the same artistic style using simple text prompts.
