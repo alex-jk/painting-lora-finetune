@@ -74,6 +74,13 @@ class UpsampleConvLayer(torch.nn.Module):
         return self.norm(x_in)
 
 """
+The TransformerNet class defines the entire feed-forward neural network for fast neural style transfer.
+- Takes an input image and transforms it into a stylized output with learned brushstrokes.
+- Encoder (self.initial_layers): the feature extractor.
+  - It takes the input image (3 color channels) and uses ConvLayers with stride=2 to progressively downsample the image's spatial dimensions while increasing the number of feature channels (e.g., from 3 to 32, then to 64, then to 128).
+  - Each convolution learns to extract increasingly complex features from the image (edges, textures, shapes).
+  - By the end of initial_layers, the network has a compact, high-dimensional representation of the image's content.
+
 """
 class TransformerNet(torch.nn.Module):
     def __init__(self):
