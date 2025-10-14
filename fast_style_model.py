@@ -25,6 +25,9 @@ class ConvLayer(torch.nn.Module):
 
 """
 The ResidualBlock class implements a core component of many deep neural networks, particularly effective in deep image-processing models like the TransformerNet.
+- It allows information to flow directly through the block (the x in x + self.block(x)), while simultaneously learning a transformation (self.block(x)) that refines the features.
+- This helps prevent vanishing gradients.
+- Allows for the construction of very deep networks that can learn complex mappings.
 """
 class ResidualBlock(torch.nn.Module):
     def __init__(self, channels):
@@ -37,3 +40,34 @@ class ResidualBlock(torch.nn.Module):
 
     def forward(self, x):
         return x + self.block(x)
+
+"""
+The UpsampleConvLayer class is designed for increasing the spatial resolution of feature maps in a neural network.
+- In a CNN, when an image (or the output of a previous layer) passes through a convolutional layer, the output is called a feature map.
+- A feature map is a representation of the input image, highlighting the presence and strength of learned features at different spatial locations.
+- The class first enlarges (increasing the spatial dimensions (Height and Width) of the feature map) the input feature map (upsampling), and then applies a convolution and normalization.
+- Enlarging the input feature map happens through the interpolate function.
+- This specific sequence helps to expand the image resolution while also avoiding common visual distortions known as "checkerboard artifacts" that can occur if upsampling is handled purely by transposed convolutions.
+"""
+class UpsampleConvLayer(torch.nn.Module):
+    """UpsampleConvLayer
+    Upsamples the input and then applies a convolution. This is useful
+    to avoid checkerboard artifacts that can arise from training purely
+    with strided convolutions.
+    """
+    def __init__(self, in_channels, out_channels, kernel_size, stride, upsample=None):
+        super(UpsampleConvLayer, self).__init__()
+        self.upsample = upsample
+        padding_size = kernel_size // 2
+        self.conv = nn.Sequential(
+            nn.ReflectionPad2d(padding_size),
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+        )
+        self.norm = nn.InstanceNorm2d(out_channels, affine=True)
+
+    def forward(self, x):
+        x_in = x
+        if self.upsample:
+            x_in = torch.nn.functional.interpolate(x_in, mode='nearest', scale_factor=self.upsample)
+        x_in = self.conv(x_in)
+        return self.norm(x_in)
