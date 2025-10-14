@@ -75,6 +75,9 @@ class UpsampleConvLayer(torch.nn.Module):
 
 """
 The TransformerNet class defines the entire feed-forward neural network for fast neural style transfer.
+-  It is a pre-trained model, specifically trained on various content images and a fixed artistic style image (e.g., "La Muse" by Picasso).
+-  Its purpose is to efficiently transform an input photo into a stylized output with the learned characteristics of that specific artistic style, including its brushstrokes and color palette,
+      by encoding image features, processing them through residual blocks, and then decoding them back into a high-resolution stylized image using upsampling layers.
 - Takes an input image and transforms it into a stylized output with learned brushstrokes.
 - Encoder (self.initial_layers): the feature extractor.
   - It takes the input image (3 color channels) and uses ConvLayers with stride=2 to progressively downsample the image's spatial dimensions while increasing the number of feature channels (e.g., from 3 to 32, then to 64, then to 128).
