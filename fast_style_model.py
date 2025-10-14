@@ -47,6 +47,7 @@ The UpsampleConvLayer class is designed for increasing the spatial resolution of
 - A feature map is a representation of the input image, highlighting the presence and strength of learned features at different spatial locations.
 - The class first enlarges (increasing the spatial dimensions (Height and Width) of the feature map) the input feature map (upsampling), and then applies a convolution and normalization.
 - Enlarging the input feature map happens through the interpolate function.
+- Need to enlarge to reconstruct a high-resolution output image from smaller, abstract feature representations, effectively increasing the spatial detail from a compressed form back to a visible image.
 - This specific sequence helps to expand the image resolution while also avoiding common visual distortions known as "checkerboard artifacts" that can occur if upsampling is handled purely by transposed convolutions.
 """
 class UpsampleConvLayer(torch.nn.Module):
@@ -71,3 +72,36 @@ class UpsampleConvLayer(torch.nn.Module):
             x_in = torch.nn.functional.interpolate(x_in, mode='nearest', scale_factor=self.upsample)
         x_in = self.conv(x_in)
         return self.norm(x_in)
+
+"""
+"""
+class TransformerNet(torch.nn.Module):
+    def __init__(self):
+        super(TransformerNet, self).__init__()
+        self.initial_layers = nn.Sequential(
+            ConvLayer(3, 32, kernel_size=9, stride=1),
+            nn.ReLU(),
+            ConvLayer(32, 64, kernel_size=3, stride=2),
+            nn.ReLU(),
+            ConvLayer(64, 128, kernel_size=3, stride=2),
+            nn.ReLU()
+        )
+        self.res_blocks = nn.Sequential(
+            ResidualBlock(128),
+            ResidualBlock(128),
+            ResidualBlock(128),
+            ResidualBlock(128),
+            ResidualBlock(128)
+        )
+        self.deconv_layers = nn.Sequential(
+            UpsampleConvLayer(128, 64, kernel_size=3, stride=1, upsample=2),
+            nn.ReLU(),
+            UpsampleConvLayer(64, 32, kernel_size=3, stride=1, upsample=2),
+            nn.ReLU(),
+            ConvLayer(32, 3, kernel_size=9, stride=1, norm_layer=False, reflect=True)
+        )
+
+    def forward(self, X):
+        y = self.initial_layers(X)
+        y = self.res_blocks(y)
+        return self.deconv_layers(y)
